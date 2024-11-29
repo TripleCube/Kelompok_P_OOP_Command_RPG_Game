@@ -4,6 +4,8 @@ public abstract class EnemyFish
     public int Damage { get; set; }
 
     public abstract void DisplayInfo();
+
+    private List<IStatusEffect> ActiveEffects { get; set; } = new List<IStatusEffect>();
 }
 
 public class SmallFish : EnemyFish
@@ -17,6 +19,28 @@ public class SmallFish : EnemyFish
     public override void DisplayInfo()
     {
         Console.WriteLine("A small fish appears!");
+    }
+
+    public void ApplyStatusEffect(IStatusEffect effect)
+    {
+        effect.Apply(this);
+        ActiveEffects.Add(effect);
+    }
+
+    public void UpdateEffects()
+    {
+        foreach (var effect in new List<IStatusEffect>(ActiveEffects)) // Copy to avoid modifying during iteration
+        {
+            if (effect is ToxicSlime toxicSlime)
+            {
+                toxicSlime.Tick(this); // Handle special behavior for Toxic Slime
+            }
+            effect.Update(this);
+            if (effect.Duration <= 0)
+            {
+                ActiveEffects.Remove(effect);
+            }
+        }
     }
 }
 
@@ -32,6 +56,28 @@ public class MediumFish : EnemyFish
     {
         Console.WriteLine("A medium fish swims by!");
     }
+
+    public void ApplyStatusEffect(IStatusEffect effect)
+    {
+        effect.Apply(this);
+        ActiveEffects.Add(effect);
+    }
+
+    public void UpdateEffects()
+    {
+        foreach (var effect in new List<IStatusEffect>(ActiveEffects)) // Copy to avoid modifying during iteration
+        {
+            if (effect is ToxicSlime toxicSlime)
+            {
+                toxicSlime.Tick(this); // Handle special behavior for Toxic Slime
+            }
+            effect.Update(this);
+            if (effect.Duration <= 0)
+            {
+                ActiveEffects.Remove(effect);
+            }
+        }
+    }
 }
 
 public class BigFish : EnemyFish
@@ -45,6 +91,28 @@ public class BigFish : EnemyFish
     public override void DisplayInfo()
     {
         Console.WriteLine("A big fish looms ahead!");
+    }
+
+    public void ApplyStatusEffect(IStatusEffect effect)
+    {
+        effect.Apply(this);
+        ActiveEffects.Add(effect);
+    }
+
+    public void UpdateEffects()
+    {
+        foreach (var effect in new List<IStatusEffect>(ActiveEffects)) // Copy to avoid modifying during iteration
+        {
+            if (effect is ToxicSlime toxicSlime)
+            {
+                toxicSlime.Tick(this); // Handle special behavior for Toxic Slime
+            }
+            effect.Update(this);
+            if (effect.Duration <= 0)
+            {
+                ActiveEffects.Remove(effect);
+            }
+        }
     }
 }
 
@@ -67,4 +135,6 @@ public class EnemyFishFactory
                 return new SmallFish();
         }
     }
+
+    
 }
