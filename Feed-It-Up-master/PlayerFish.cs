@@ -8,7 +8,9 @@ public sealed class PlayerFish
     public int Health { get; set; }
     public int Level { get; set; }
     public Inventory Inventory { get; set; }
+    public SkillInventory SkillInventory { get; set; }
     public IPlayerState State { get; set; }
+    private List<IStatusEffect> ActiveEffects { get; set; } = new List<IStatusEffect>();
 
     private PlayerFish()
     {
@@ -16,7 +18,11 @@ public sealed class PlayerFish
         Health = 100;
         Level = 1;
         Inventory = new Inventory();
+        SkillInventory = new SkillInventory();
         State = new NormalState();
+
+        // Start with initial skills
+        SkillInventory.AddSkill(new SpeedBoostSkill());
     }
 
     public static PlayerFish Instance
@@ -34,25 +40,61 @@ public sealed class PlayerFish
         }
     }
 
-    public void Eat(int foodSize)
+    public void UnlockSkillsForLevel()
     {
-        State.Eat(this, foodSize);
+        switch (Level)
+        {
+            case 3:
+                SkillInventory.AddSkill(new BubbleShieldSkill());
+                break;
+            case 5:
+                SkillInventory.AddSkill(new HealSkill());
+                break;
+            case 7:
+                SkillInventory.AddSkill(new RageSkill());
+                break;
+        }
     }
 
-    public void TakeDamage(int damage)
+    public void ApplyStatusEffect(IStatusEffect effect)
     {
-        State.TakeDamage(this, damage);
+        effect.Apply(this);
+        ActiveEffects.Add(effect);
     }
 
-    public void UsePowerUp(PowerUp powerUp)
+    public void UpdateEffects()
     {
-        powerUp.ApplyEffect(this);
+        foreach (var effect in new List<IStatusEffect>(ActiveEffects)) // Copy to avoid modifying during iteration
+        {
+            if (effect is ToxicSlime toxicSlime)
+            {
+                toxicSlime.Tick(this); // Handle special behavior for Toxic Slime
+            }
+            effect.Update(this);
+            if (effect.Duration <= 0)
+            {
+                ActiveEffects.Remove(effect);
+            }
+        }
     }
+
+    // Existing methods remain the same
+    public void Eat(int foodSize) => State.Eat(this, foodSize);
+    public void TakeDamage(int damage) => State.TakeDamage(this, damage);
+    public void UsePowerUp(PowerUp powerUp) => powerUp.ApplyEffect(this);
 
     public void LevelUp()
     {
         Level++;
         Size++;
         Console.WriteLine($"Congratulations! You've reached level {Level} and your size increased to {Size}.");
+        UnlockSkillsForLevel();
+    }
+
+    public void InteractWithNPC(NPC npc)
+    {
+        npc.TalkToPlayer(this);
+        npc.OfferMission(this);
+        npc.GiveItem(this);
     }
 }
